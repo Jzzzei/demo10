@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{title}}</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            background-color: #f4f4f4;
+        }
+
+        header {
+            background-color: #333;
+            color: white;
+            padding: 1rem;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+
+        .nav-links a {
+            color: white;
+            text-decoration: none;
+            margin-left: 1rem;
+        }
+
+        main {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+            min-height: calc(100vh - 160px);
+        }
+
+        footer {
+            background-color: #333;
+            color: white;
+            padding: 1rem;
+            text-align: center;
+        }
+
+        .btn {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1rem;
+        }
+
+        .btn-primary {
+            background-color: #4CAF50;
+            color: white;
+        }
+
+        .btn-secondary {
+            background-color: #f8f8f8;
+            border: 1px solid #ddd;
+        }
+
+        .card {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            padding: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <nav>
+            <a href="/static" class="logo">E-Shop</a>
+            <div class="nav-links">
+                <a href="/product-list.html">Products</a>
+                <a href="/cart.html">Cart</a>
+                <a href="/favorites.html">Favorites</a>
+                <a href="/profile.html" id="profileLink" style="display: none;">Profile</a>
+                <a href="/admin.html" id="adminLink" style="display: none;">Admin</a>
+                <a href="/login.html" id="loginLink">Login</a>
+                <a href="#" id="logoutLink" style="display: none;" onclick="logout()">Logout</a>
+            </div>
+        </nav>
+    </header>
+
+    <main id="content">
+        <!-- 页面内容将被注入这里 -->
+    </main>
+
+    <footer>
+        <p>&copy; 2024 E-Shop. All rights reserved.</p>
+    </footer>
+
+    <script>
+        // 检查用户登录状态
+        function checkAuth() {
+            const token = localStorage.getItem('token');
+            const loginLink = document.getElementById('loginLink');
+            const logoutLink = document.getElementById('logoutLink');
+            const profileLink = document.getElementById('profileLink');
+            const adminLink = document.getElementById('adminLink');
+
+            if (token) {
+                loginLink.style.display = 'none';
+                logoutLink.style.display = 'inline';
+                profileLink.style.display = 'inline';
+                
+                // 检查是否是管理员
+                const user = JSON.parse(localStorage.getItem('user'));
+                if (user && user.roles.includes('ROLE_ADMIN')) {
+                    adminLink.style.display = 'inline';
+                }
+            } else {
+                loginLink.style.display = 'inline';
+                logoutLink.style.display = 'none';
+                profileLink.style.display = 'none';
+                adminLink.style.display = 'none';
+            }
+        }
+
+        // 登出函数
+        function logout() {
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            window.location.href = '/login.html';
+        }
+
+        // 页面加载时检查认证状态
+        document.addEventListener('DOMContentLoaded', checkAuth);
+    </script>
+</body>
+</html> 

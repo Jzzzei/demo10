@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="/scripts/layout.js"></script>
+</head>
+<body>
+    <script>
+        loadLayout('Profile', `
+            <div class="profile-container">
+                <div class="profile-section">
+                    <h2>Personal Information</h2>
+                    <form id="profileForm" onsubmit="updateProfile(event)">
+                        <div class="form-group">
+                            <label for="firstName">First Name</label>
+                            <input type="text" id="firstName" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="lastName">Last Name</label>
+                            <input type="text" id="lastName" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="email">Email</label>
+                            <input type="email" id="email" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="phone">Phone</label>
+                            <input type="tel" id="phone">
+                        </div>
+                        <button type="submit" class="save-btn">Save Changes</button>
+                    </form>
+                </div>
+
+                <div class="profile-section">
+                    <h2>Addresses</h2>
+                    <div class="address-container">
+                        <div class="address-card">
+                            <h3>Default Shipping Address</h3>
+                            <div id="shippingAddress"></div>
+                            <button onclick="editAddress('shipping')" class="edit-btn">Edit</button>
+                        </div>
+                        <div class="address-card">
+                            <h3>Default Billing Address</h3>
+                            <div id="billingAddress"></div>
+                            <button onclick="editAddress('billing')" class="edit-btn">Edit</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="profile-section">
+                    <h2>Order History</h2>
+                    <div id="orderHistory" class="order-history">
+                        <!-- Orders will be loaded here -->
+                    </div>
+                    <div id="orderPagination" class="pagination">
+                        <!-- Pagination controls -->
+                    </div>
+                </div>
+            </div>
+        `);
+
+        async function loadProfile() {
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch('/api/profile', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                const profile = await response.json();
+                
+                // 填充个人信息
+                document.getElementById('firstName').value = profile.firstName || '';
+                document.getElementById('lastName').value = profile.lastName || '';
+                document.getElementById('email').value = profile.email || '';
+                document.getElementById('phone').value = profile.phone || '';
+                
+                // 填充地址信息
+                if (profile.defaultShippingAddress) {
+                    document.getElementById('shippingAddress').innerHTML = formatAddress(profile.defaultShippingAddress);
+                }
+                if (profile.defaultBillingAddress) {
+                    document.getElementById('billingAddress').innerHTML = formatAddress(profile.defaultBillingAddress);
+                }
+                
+                // 加载订单历史
+                loadOrderHistory();
+                
+            } catch (error) {
+                console.error('Error loading profile:', error);
+                alert('Failed to load profile information');
+            }
+        }
+
+        async function updateProfile(event) {
+            event.preventDefault();
+            
+            const profileData = {
+                firstName: document.getElementById('firstName').value,
+                lastName: document.getElementById('lastName').value,
+                email: document.getElementById('email').value,
+                phone: document.getElementById('phone').value
+            };
+
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch('/api/profile', {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify(profileData)
+                });
+
+                if (response.ok) {
+                    alert('Profile updated successfully');
+                } else {
+                    const error = await response.json();
+                    alert(error.message || 'Failed to update profile');
+                }
+            } catch (error) {
+                console.error('Error updating profile:', error);
+                alert('An error occurred while updating profile');
+            }
+        }
+
+        function formatAddress(address) {
+            return `
+                <p>${address.street}</p>
+                <p>${address.city}, ${address.state} ${address.zipCode}</p>
+                <p>${address.country}</p>
+                ${address.phone ? `<p>Phone: ${address.phone}</p>` : ''}
+            `;
+        }
+
+        document.addEventListener('DOMContentLoaded', loadProfile);
+    </script>
+    <style>
+        .profile-container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .profile-section {
+            background-color: white;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: bold;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 0.5rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        .save-btn, .edit-btn {
+            padding: 0.5rem 1rem;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .edit-btn {
+            background-color: #2196F3;
+        }
+
+        .address-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1rem;
+        }
+
+        .address-card {
+            padding: 1rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        .order-history {
+            margin-top: 1rem;
+        }
+
+        .pagination {
+            display: flex;
+            justify-content: center;
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+    </style>
+</body>
+</html> 

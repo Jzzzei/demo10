@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="/scripts/layout.js"></script>
+</head>
+<body>
+    <script>
+        loadLayout('Admin Dashboard', `
+            <div class="admin-container">
+                <div class="admin-sidebar">
+                    <nav>
+                        <button onclick="showSection('products')" class="nav-btn active">Products</button>
+                        <button onclick="showSection('orders')" class="nav-btn">Orders</button>
+                        <button onclick="showSection('users')" class="nav-btn">Users</button>
+                        <button onclick="showSection('statistics')" class="nav-btn">Statistics</button>
+                    </nav>
+                </div>
+
+                <div class="admin-content">
+                    <div id="products" class="section active">
+                        <div class="section-header">
+                            <h2>Products Management</h2>
+                            <button onclick="openProductModal()" class="add-btn">Add Product</button>
+                        </div>
+                        <div id="productList" class="grid-list">
+                            <!-- Products will be loaded here -->
+                        </div>
+                    </div>
+
+                    <div id="orders" class="section">
+                        <div class="section-header">
+                            <h2>Orders Management</h2>
+                        </div>
+                        <div id="orderList" class="list">
+                            <!-- Orders will be loaded here -->
+                        </div>
+                    </div>
+
+                    <div id="users" class="section">
+                        <div class="section-header">
+                            <h2>Users Management</h2>
+                        </div>
+                        <div id="userList" class="list">
+                            <!-- Users will be loaded here -->
+                        </div>
+                    </div>
+
+                    <div id="statistics" class="section">
+                        <div class="section-header">
+                            <h2>Statistics</h2>
+                        </div>
+                        <div class="stats-grid">
+                            <div class="stats-card">
+                                <h3>Total Sales</h3>
+                                <div id="totalSales"></div>
+                            </div>
+                            <div class="stats-card">
+                                <h3>Total Orders</h3>
+                                <div id="totalOrders"></div>
+                            </div>
+                            <div class="stats-card">
+                                <h3>Total Users</h3>
+                                <div id="totalUsers"></div>
+                            </div>
+                            <div class="stats-card">
+                                <h3>Popular Products</h3>
+                                <div id="popularProducts"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Product Modal -->
+            <div id="productModal" class="modal">
+                <div class="modal-content">
+                    <h2>Add/Edit Product</h2>
+                    <form id="productForm" onsubmit="saveProduct(event)">
+                        <!-- Product form fields -->
+                    </form>
+                </div>
+            </div>
+        `);
+
+        // 加载产品列表
+        async function loadProducts() {
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch('/api/products', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                const products = await response.json();
+                const productList = document.getElementById('productList');
+                
+                productList.innerHTML = products.map(product => `
+                    <div class="product-card">
+                        <img src="${product.imageUrl}" alt="${product.name}">
+                        <div class="product-info">
+                            <h3>${product.name}</h3>
+                            <p>$${product.price}</p>
+                            <p>Stock: ${product.quantity}</p>
+                        </div>
+                        <div class="product-actions">
+                            <button onclick="editProduct(${product.id})" class="edit-btn">Edit</button>
+                            <button onclick="deleteProduct(${product.id})" class="delete-btn">Delete</button>
+                        </div>
+                    </div>
+                `).join('');
+                
+            } catch (error) {
+                console.error('Error loading products:', error);
+            }
+        }
+
+        // 切换显示不同的部分
+        function showSection(sectionId) {
+            document.querySelectorAll('.section').forEach(section => {
+                section.classList.remove('active');
+            });
+            document.getElementById(sectionId).classList.add('active');
+            
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            // 加载相应的数据
+            switch(sectionId) {
+                case 'products':
+                    loadProducts();
+                    break;
+                case 'orders':
+                    loadOrders();
+                    break;
+                case 'users':
+                    loadUsers();
+                    break;
+                case 'statistics':
+                    loadStatistics();
+                    break;
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            loadProducts();
+        });
+    </script>
+    <style>
+        .admin-container {
+            display: grid;
+            grid-template-columns: 200px 1fr;
+            min-height: calc(100vh - 64px);
+        }
+
+        .admin-sidebar {
+            background-color: #333;
+            padding: 1rem;
+        }
+
+        .nav-btn {
+            display: block;
+            width: 100%;
+            padding: 0.75rem 1rem;
+            margin-bottom: 0.5rem;
+            background: none;
+            border: none;
+            color: white;
+            text-align: left;
+            cursor: pointer;
+        }
+
+        .nav-btn.active {
+            background-color: #4CAF50;
+        }
+
+        .admin-content {
+            padding: 2rem;
+        }
+
+        .section {
+            display: none;
+        }
+
+        .section.active {
+            display: block;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+
+        .grid-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 1rem;
+        }
+
+        .product-card {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .product-card img {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+        }
+
+        .product-info {
+            padding: 1rem;
+        }
+
+        .product-actions {
+            padding: 1rem;
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+
+        .stats-card {
+            background-color: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+        }
+
+        .modal-content {
+            background-color: white;
+            padding: 2rem;
+            border-radius: 8px;
+            max-width: 500px;
+            margin: 2rem auto;
+        }
+    </style>
+</body>
+</html> 
